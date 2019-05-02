@@ -48,3 +48,11 @@ curl -X PATCH http://localhost:3014/api/items/1 -d '{
 ```
 curl -X DELETE http://localhost:3014/api/items/1
 ```
+
+## Catches
+Some of the issues I ran into on the way:
+* It has to be nightly. The official image as-is won't do. Gotta do the `rustup override set nightly`.
+* `diesel` doesn't work with the `rust:slim` Docker image. It dies with `error: linking with 'cc' failed: exit code: 1`.
+* I had to specify `features` in `Cargo.toml` to get stuff working. I'm pretty sure this shouldn't be necessary, but at least it works.
+* Postgres `BigInt` maps to `i32`, not `i64`
+* In database-related functions, `use crate::db::schema::items::dsl::*` re-defines all the field-names in the local scope. Took a while to figure out why the compiler said the function parameter `id` wasn't used.
