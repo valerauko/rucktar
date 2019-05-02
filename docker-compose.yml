@@ -15,17 +15,6 @@ services:
       - db
     command: tail -f /dev/null
 
-  gui:
-    image: clojure:lein-alpine
-    working_dir: /root
-    command: lein repl :headless :host 0.0.0.0 :port 38001
-    ports:
-      - 38001:38001
-    volumes:
-      - .:/root
-    depends_on:
-      - api
-
   db:
     image: postgres:11-alpine
     volumes:
