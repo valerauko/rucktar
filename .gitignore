@@ -1,0 +1,9 @@
+# local project folders
+/crates
+/psql
+.bash_history
+.ash_history
+
+# rust stuff
+api/target
+**/*.rs.bk
