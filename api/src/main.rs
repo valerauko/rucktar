@@ -1,7 +1,9 @@
 #[macro_use]
 extern crate diesel;
+extern crate env_logger;
 
 use actix_web::web;
+use actix_web::middleware::Logger;
 use actix_web::{App, HttpServer};
 
 use std::env;
@@ -11,6 +13,8 @@ mod db;
 mod handlers;
 
 fn main() -> io::Result<()> {
+    env_logger::init();
+
     HttpServer::new(|| {
         let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
         let pool = db::init_pool(db_url).expect("Couldn't establish connection to database!");
@@ -27,6 +31,7 @@ fn main() -> io::Result<()> {
                     .route(web::delete().to(handlers::items::destroy))
                     .route(web::patch().to(handlers::items::update)),
             )
+            .wrap(Logger::default())
     })
     .bind("0.0.0.0:3014")?
     .run()
