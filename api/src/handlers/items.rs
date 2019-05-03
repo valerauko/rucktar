@@ -1,35 +1,60 @@
-use crate::db::models::{Item, NewItem, ItemForm};
+use crate::db::models::{Item, ItemForm, NewItem};
 use crate::db::Connection as DbConnection;
 
-use rocket_contrib::json::{Json};
-use rocket::http::{Status};
-use diesel::result::{Error};
+use actix_web::web::{HttpResponse, Json, Path};
+use actix_web::Result;
 
-#[get("/")]
-pub fn index(conn: DbConnection) -> Result<Json<Vec<Item>>, Error> {
-    Ok(Json(Item::select(&conn)?))
+pub fn index(conn: DbConnection) -> Result<Json<Vec<Item>>> {
+    Item::select(&conn).map(|items| Json(items)).map_err(|e| {
+        HttpResponse::InternalServerError()
+            .body(e.to_string())
+            .into()
+    })
 }
 
-#[post("/", data = "<item>")]
-pub fn create(conn: DbConnection, item: Json<NewItem>) -> Result<Json<Item>, Error> {
-    Ok(Json(item.into_inner().insert(&conn)?))
+pub fn create(conn: DbConnection, item: Json<NewItem>) -> Result<Json<Item>> {
+    item.into_inner()
+        .insert(&conn)
+        .map(|x| Json(x))
+        .map_err(|e| {
+            HttpResponse::InternalServerError()
+                .body(e.to_string())
+                .into()
+        })
 }
 
-#[get("/<item_id>")]
-pub fn show(item_id: i32, conn: DbConnection) -> Result<Json<Item>, Error> {
-    Ok(Json(Item::find(item_id, &conn)?))
+pub fn show(item_id: Path<i32>, conn: DbConnection) -> Result<Json<Item>> {
+    Item::find(item_id.into_inner(), &conn)
+        .map(|item| Json(item))
+        .map_err(|e| {
+            match e {
+                diesel::result::Error::NotFound => HttpResponse::NotFound().finish(),
+                _ => HttpResponse::InternalServerError().body(e.to_string()),
+            }
+            .into()
+        })
 }
 
-#[delete("/<item_id>")]
-pub fn destroy(item_id: i32, conn: DbConnection) -> Result<Status, Error> {
-    Item::destroy(item_id, &conn)?;
-
-    Ok(Status::NoContent)
+pub fn destroy(item_id: Path<i32>, conn: DbConnection) -> Result<()> {
+    Item::destroy(item_id.into_inner(), &conn)
+        .map(|_| ())
+        .map_err(|e| {
+            match e {
+                diesel::result::Error::NotFound => HttpResponse::NotFound().finish(),
+                _ => HttpResponse::InternalServerError().body(e.to_string()),
+            }
+            .into()
+        })
 }
 
-#[patch("/<item_id>", data = "<item>")]
-pub fn update(item_id: i32, conn: DbConnection, item: Json<ItemForm>) -> Result<Json<Item>, Error> {
-    let updated_item = Item::update(item_id, item.into_inner(), &conn)?;
-
-    Ok(Json(updated_item))
+pub fn update(item_id: Path<i32>, conn: DbConnection, item: Json<ItemForm>) -> Result<Json<Item>> {
+    Item::update(item_id.into_inner(), item.into_inner(), &conn)
+        .map(|item| Json(item))
+        .map_err(|e| {
+            match e {
+                diesel::result::Error::NotFound => HttpResponse::NotFound().finish(),
+                _ => HttpResponse::InternalServerError().body(e.to_string()),
+            }
+            .into()
+        })
 }
