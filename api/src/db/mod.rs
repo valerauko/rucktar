@@ -1,3 +1,4 @@
+/// Based heavily on Rustodon https://github.com/rustodon/rustodon/blob/master/src/db/mod.rs
 use actix_web::dev::Payload;
 use actix_web::error::InternalError;
 use actix_web::http::StatusCode;
@@ -50,7 +51,9 @@ impl FromRequest for Connection {
             // .get() a connection from the pool
             Ok(conn) => Ok(Connection(conn)),
             Err(_) => {
-                Err(InternalError::new(&"no db connection", StatusCode::SERVICE_UNAVAILABLE).into())
+                Err(InternalError::new(
+                    &"Database is unreachable", StatusCode::SERVICE_UNAVAILABLE
+                ).into())
             }
         }
     }
