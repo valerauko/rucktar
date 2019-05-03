@@ -1,10 +1,10 @@
-# Basic Rocket REST example
+# Basic actix-web REST example
 
-I couldn't find any Rocket examples that used Postgres, so here we go.
+Based on example from https://github.com/valerauko/rucktar/tree/rocket-rest-example
 
 ## What's in it
 * Docker
-* Rocket (Rust)
+* actix-web (Rust)
 * Postgres
 
 ## How does it work?
@@ -20,7 +20,7 @@ I couldn't find any Rocket examples that used Postgres, so here we go.
 ## Example `curl` commands
 ### Create new Item
 ```
-curl -X POST http://localhost:3014/api/items -d '{
+curl -X POST http://localhost:3014/api/items --header 'Content-Type: application/json' -d '{
   "name": "New Item 1",
   "description": "A new item"
 }'
@@ -39,7 +39,7 @@ curl http://localhost:3014/api/items
 
 ### Update Item
 ```
-curl -X PATCH http://localhost:3014/api/items/1 -d '{
+curl -X PATCH http://localhost:3014/api/items/1 --header 'Content-Type: application/json' -d '{
   "description": "A new item that is absolutely fantastic!"
 }'
 ```
@@ -51,7 +51,6 @@ curl -X DELETE http://localhost:3014/api/items/1
 
 ## Catches
 Some of the issues I ran into on the way:
-* It has to be nightly. The official image as-is won't do. Gotta do the `rustup override set nightly`.
 * `diesel` doesn't work with the `rust:slim` Docker image. It dies with `error: linking with 'cc' failed: exit code: 1`.
 * I had to specify `features` in `Cargo.toml` to get stuff working. I'm pretty sure this shouldn't be necessary, but at least it works.
 * Postgres `BigInt` maps to `i32`, not `i64`
