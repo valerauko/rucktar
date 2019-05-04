@@ -1,10 +1,11 @@
-/// Taken as-is from Rustodon https://github.com/rustodon/rustodon/blob/master/src/db/mod.rs
+/// Based heavily on Rustodon https://github.com/rustodon/rustodon/blob/master/src/db/mod.rs
+use actix_web::dev::Payload;
+use actix_web::error::InternalError;
+use actix_web::http::StatusCode;
+use actix_web::{Error, FromRequest, HttpRequest};
 pub use diesel::connection::Connection as DieselConnection;
-use diesel::pg::{PgConnection};
+use diesel::pg::PgConnection;
 use diesel::r2d2::{self, ConnectionManager};
-use rocket::http::Status;
-use rocket::request::{self, FromRequest};
-use rocket::{Outcome, Request, State};
 use std::ops::Deref;
 
 pub mod models;
@@ -37,17 +38,23 @@ pub struct Connection(pub PooledConnection);
 /// Attempts to retrieve a single connection from the database pool;
 /// if no pool is online, fails with `InternalServerError`.
 /// If no connections are available, fails with `ServiceUnavailable`.
-impl<'a, 'r> FromRequest<'a, 'r> for Connection {
-    type Error = ();
+impl FromRequest for Connection {
+    type Config = ();
+    type Error = Error;
+    type Future = Result<Self, Error>;
 
-    fn from_request(request: &'a Request<'r>) -> request::Outcome<Connection, ()> {
+    fn from_request(req: &HttpRequest, _payload: &mut Payload) -> Self::Future {
         // retrieve the database connection from Rocket's managed data
-        let pool = request.guard::<State<Pool>>()?;
+        let pool = req.app_data::<Pool>().unwrap();
 
         match pool.get() {
             // .get() a connection from the pool
-            Ok(conn) => Outcome::Success(Connection(conn)),
-            Err(_) => Outcome::Failure((Status::ServiceUnavailable, ())),
+            Ok(conn) => Ok(Connection(conn)),
+            Err(_) => {
+                Err(InternalError::new(
+                    &"Database is unreachable", StatusCode::SERVICE_UNAVAILABLE
+                ).into())
+            }
         }
     }
 }

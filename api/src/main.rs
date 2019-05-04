@@ -1,30 +1,38 @@
-#![feature(proc_macro_hygiene, decl_macro, custom_attribute)]
-
-#[macro_use]
-extern crate rocket;
-extern crate rocket_contrib;
 #[macro_use]
 extern crate diesel;
-#[macro_use]
-extern crate serde_derive;
+extern crate env_logger;
+
+use actix_web::web;
+use actix_web::middleware::Logger;
+use actix_web::{App, HttpServer};
 
 use std::env;
+use std::io;
 
 mod db;
 mod handlers;
 
-fn main() {
-    let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let pool = db::init_pool(db_url).expect("Couldn't establish connection to database!");
+fn main() -> io::Result<()> {
+    env_logger::init();
 
-    rocket::ignite()
-        .mount("/api/items", routes![
-            handlers::items::show,
-            handlers::items::index,
-            handlers::items::create,
-            handlers::items::update,
-            handlers::items::destroy
-        ])
-        .manage(pool)
-        .launch();
+    HttpServer::new(|| {
+        let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+        let pool = db::init_pool(db_url).expect("Couldn't establish connection to database!");
+        App::new()
+            .data(pool)
+            .service(
+                web::resource("/api/items")
+                    .route(web::get().to(handlers::items::index))
+                    .route(web::post().to(handlers::items::create)),
+            )
+            .service(
+                web::resource("/api/items/{item_id}")
+                    .route(web::get().to(handlers::items::show))
+                    .route(web::delete().to(handlers::items::destroy))
+                    .route(web::patch().to(handlers::items::update)),
+            )
+            .wrap(Logger::new("%s %Dms \"%r\" %a \"%{User-Agent}i\""))
+    })
+    .bind("0.0.0.0:3014")?
+    .run()
 }

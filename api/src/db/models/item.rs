@@ -1,9 +1,13 @@
-use crate::db::DbConnection;
 use crate::db::schema::items;
 use crate::db::schema::items::dsl;
+use crate::db::DbConnection;
+
+use serde::{Deserialize, Serialize};
 
 use diesel;
 use diesel::prelude::*;
+
+use diesel::{AsChangeset, Identifiable, Insertable, Queryable};
 
 use chrono::offset::Utc;
 use chrono::DateTime;
@@ -14,7 +18,7 @@ pub struct Item {
     pub id: i32,
     pub name: String,
     pub description: String,
-    pub created_at: DateTime<Utc>
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Insertable, Debug, Deserialize)]
@@ -24,11 +28,11 @@ pub struct NewItem {
     pub description: String,
 }
 
-#[derive(AsChangeset, Deserialize, Serialize)]
+#[derive(Debug, AsChangeset, Deserialize, Serialize)]
 #[table_name = "items"]
 pub struct ItemForm {
     pub name: Option<String>,
-    pub description: Option<String>
+    pub description: Option<String>,
 }
 
 impl NewItem {

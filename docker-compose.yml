@@ -1,10 +1,10 @@
 version: '3'
 services:
   api:
-    build:
-      context: api
+    image: rust:1
     working_dir: /usr/local/rucktar
     environment:
+      RUST_LOG: actix_web=debug
       DATABASE_URL: postgres://rucktar:whatever@db/rucktar
     volumes:
       - ./api:/usr/local/rucktar
@@ -14,17 +14,6 @@ services:
     depends_on:
       - db
     command: tail -f /dev/null
-
-  gui:
-    image: clojure:lein-alpine
-    working_dir: /root
-    command: lein repl :headless :host 0.0.0.0 :port 38001
-    ports:
-      - 38001:38001
-    volumes:
-      - .:/root
-    depends_on:
-      - api
 
   db:
     image: postgres:11-alpine
