@@ -31,7 +31,7 @@ fn main() -> io::Result<()> {
                     .route(web::delete().to(handlers::items::destroy))
                     .route(web::patch().to(handlers::items::update)),
             )
-            .wrap(Logger::default())
+            .wrap(Logger::new("%s %Dms \"%r\" %a \"%{User-Agent}i\""))
     })
     .bind("0.0.0.0:3014")?
     .run()
