@@ -1,10 +1,26 @@
 use crate::db::models::{Item, ItemForm, NewItem};
 use crate::db::Connection as DbConnection;
 
-use actix_web::web::{HttpResponse, Json, Path};
+use actix_web::dev::HttpServiceFactory;
+use actix_web::web::{self, HttpResponse, Json, Path};
 use actix_web::Result;
 
-pub fn index(conn: DbConnection) -> Result<Json<Vec<Item>>> {
+pub fn handler(path: &str) -> impl HttpServiceFactory {
+    web::scope(path)
+        .service(
+            web::resource("")
+                .route(web::get().to(index))
+                .route(web::post().to(create)),
+        )
+        .service(
+            web::resource("/{item_id}")
+                .route(web::get().to(show))
+                .route(web::delete().to(destroy))
+                .route(web::patch().to(update)),
+        )
+}
+
+fn index(conn: DbConnection) -> Result<Json<Vec<Item>>> {
     Item::select(&conn).map(Json).map_err(|e| {
         HttpResponse::InternalServerError()
             .body(e.to_string())
@@ -12,7 +28,7 @@ pub fn index(conn: DbConnection) -> Result<Json<Vec<Item>>> {
     })
 }
 
-pub fn create(conn: DbConnection, item: Json<NewItem>) -> Result<Json<Item>> {
+fn create(conn: DbConnection, item: Json<NewItem>) -> Result<Json<Item>> {
     item.into_inner().insert(&conn).map(Json).map_err(|e| {
         HttpResponse::InternalServerError()
             .body(e.to_string())
@@ -20,7 +36,7 @@ pub fn create(conn: DbConnection, item: Json<NewItem>) -> Result<Json<Item>> {
     })
 }
 
-pub fn show(item_id: Path<i32>, conn: DbConnection) -> Result<Json<Item>> {
+fn show(item_id: Path<i32>, conn: DbConnection) -> Result<Json<Item>> {
     Item::find(item_id.into_inner(), &conn)
         .map(Json)
         .map_err(|e| {
@@ -32,7 +48,7 @@ pub fn show(item_id: Path<i32>, conn: DbConnection) -> Result<Json<Item>> {
         })
 }
 
-pub fn destroy(item_id: Path<i32>, conn: DbConnection) -> Result<()> {
+fn destroy(item_id: Path<i32>, conn: DbConnection) -> Result<()> {
     Item::destroy(item_id.into_inner(), &conn)
         .map(|_| ())
         .map_err(|e| {
@@ -44,7 +60,7 @@ pub fn destroy(item_id: Path<i32>, conn: DbConnection) -> Result<()> {
         })
 }
 
-pub fn update(item_id: Path<i32>, conn: DbConnection, item: Json<ItemForm>) -> Result<Json<Item>> {
+fn update(item_id: Path<i32>, conn: DbConnection, item: Json<ItemForm>) -> Result<Json<Item>> {
     Item::update(item_id.into_inner(), item.into_inner(), &conn)
         .map(Json)
         .map_err(|e| {

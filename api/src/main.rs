@@ -1,8 +1,6 @@
 #[macro_use]
 extern crate diesel;
-extern crate env_logger;
 
-use actix_web::web;
 use actix_web::middleware::Logger;
 use actix_web::{App, HttpServer};
 
@@ -20,17 +18,7 @@ fn main() -> io::Result<()> {
         let pool = db::init_pool(db_url).expect("Couldn't establish connection to database!");
         App::new()
             .data(pool)
-            .service(
-                web::resource("/api/items")
-                    .route(web::get().to(handlers::items::index))
-                    .route(web::post().to(handlers::items::create)),
-            )
-            .service(
-                web::resource("/api/items/{item_id}")
-                    .route(web::get().to(handlers::items::show))
-                    .route(web::delete().to(handlers::items::destroy))
-                    .route(web::patch().to(handlers::items::update)),
-            )
+            .service(handlers::items::handler(&"/api/items"))
             .wrap(Logger::default())
     })
     .bind("0.0.0.0:3014")?
