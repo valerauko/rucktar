@@ -5,11 +5,13 @@ use actix_web::web::{HttpResponse, Json, Path};
 use actix_web::Result;
 
 pub fn index(conn: DbConnection) -> Result<Json<Vec<Item>>> {
-    Item::select(&conn).map(|items| Json(items)).map_err(|e| {
-        HttpResponse::InternalServerError()
-            .body(e.to_string())
-            .into()
-    })
+    Item::select(&conn)
+        .map(|items| Json(items))
+        .map_err(|e| {
+            HttpResponse::InternalServerError()
+                .body(e.to_string())
+                .into()
+        })
 }
 
 pub fn create(conn: DbConnection, item: Json<NewItem>) -> Result<Json<Item>> {
