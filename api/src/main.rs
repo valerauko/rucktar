@@ -15,11 +15,12 @@ mod handlers;
 fn main() -> io::Result<()> {
     env_logger::init();
 
-    HttpServer::new(|| {
-        let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-        let pool = db::init_pool(db_url).expect("Couldn't establish connection to database!");
+    let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let pool = db::init_pool(db_url).expect("Couldn't establish connection to database!");
+
+    HttpServer::new(move || {
         App::new()
-            .data(pool)
+            .data(pool.clone())
             .service(
                 web::resource("/api/items")
                     .route(web::get().to(handlers::items::index))
