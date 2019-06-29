@@ -13,7 +13,19 @@ services:
       - 3014:3014
     depends_on:
       - db
-    command: tail -f /dev/null
+    command: cargo run
+
+  frontend:
+    build: ./frontend
+    image: valerauko/node-jdk
+    volumes:
+      - ./frontend:/usr/local/rucktar
+      - ./.m2:/root/.m2
+    ports:
+      - 9620:9620
+      - 9630:9630
+      - 9640:9640
+    command: yarn run watch
 
   db:
     image: postgres:11-alpine
