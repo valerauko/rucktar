@@ -1,0 +1,17 @@
+{
+  "name": "rucktar",
+  "version": "0.0.1",
+  "scripts": {
+    "watch": "shadow-cljs watch browser"
+  },
+  "devDependencies": {
+    "shadow-cljs": "^2.8.39"
+  },
+  "dependencies": {
+    "create-react-class": "^15.6.3",
+    "react": "^16.3.2",
+    "react-dom": "^16.3.2",
+    "react-flip-move": "^3.0.1",
+    "react-highlight.js": "^1.0.7"
+  }
+}
